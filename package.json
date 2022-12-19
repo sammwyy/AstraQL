@@ -29,10 +29,12 @@
   },
   "module": "lib/index.esm.js",
   "dependencies": {
-    "isomorphic-unfetch": "^3.1.0"
+    "isomorphic-unfetch": "^3.1.0",
+    "md5": "^2.3.0"
   },
   "devDependencies": {
     "@types/jest": "29.2.4",
+    "@types/md5": "^2.3.2",
     "@typescript-eslint/eslint-plugin": "5.46.0",
     "@typescript-eslint/parser": "5.46.0",
     "eslint": "8.29.0",

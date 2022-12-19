@@ -1,16 +1,22 @@
 import unfetch from 'isomorphic-unfetch';
+import md5 from 'md5';
+
+import { CacheLoader } from './cache';
 import { GraphQLRequest } from './request';
 
 interface GQLClientSettings {
+  cache?: CacheLoader;
   endpoint: string;
   headers?: Record<string, any>;
 }
 
 export class GraphQLClient {
+  private cache: CacheLoader | undefined;
   private endpoint: string;
   private headers: Record<string, any>;
 
   constructor(settings: GQLClientSettings) {
+    this.cache = settings.cache;
     this.endpoint = settings.endpoint;
     this.headers = settings.headers ? settings.headers : {};
   }
@@ -27,19 +33,39 @@ export class GraphQLClient {
     this.endpoint = endpoint;
   }
 
-  public async fetch(
+  private async _getCachedFetch(
+    request: GraphQLRequest,
+    variables?: Record<string, any>,
+  ): Promise<Record<string, any> | null> {
+    if (!this.cache) return null;
+
+    const rawId = request.type + request.body + JSON.stringify(variables);
+    const id = md5(rawId);
+    const data = await this.cache.get(id);
+    return data ? JSON.parse(data) : null;
+  }
+
+  private async _saveResponseToCache(
+    request: GraphQLRequest,
+    variables: Record<string, any>,
+    response: Record<string, any>,
+  ): Promise<void> {
+    if (!this.cache) return;
+
+    const rawId = request.type + request.body + JSON.stringify(variables);
+    const id = md5(rawId);
+    await this.cache.save(id, JSON.stringify(response));
+  }
+
+  private async _fetch(
     request: GraphQLRequest,
     variables?: Record<string, any>,
   ): Promise<Record<string, any>> {
-    if (!request.body.startsWith(request.type)) {
-      request.body = `${request.type} ${request.body}`;
-    }
-
     const copyRequest = {} as Record<string, any>;
     copyRequest[request.type] = request.body;
     copyRequest.variables = request.variables || variables;
 
-    const res = await unfetch(this.endpoint, {
+    const req = await unfetch(this.endpoint, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -49,7 +75,23 @@ export class GraphQLClient {
       body: JSON.stringify(copyRequest),
     });
 
-    const { data, errors, error } = await res.json();
+    const res = await req.json();
+    await this._saveResponseToCache(request, variables || {}, res);
+    return res;
+  }
+
+  public async fetch(
+    request: GraphQLRequest,
+    variables?: Record<string, any>,
+  ): Promise<Record<string, any>> {
+    if (!request.body.startsWith(request.type)) {
+      request.body = `${request.type} ${request.body}`;
+    }
+
+    let res = await this._getCachedFetch(request, variables);
+    if (!res) res = await this._fetch(request, variables);
+
+    const { data, errors, error } = res;
 
     if (data) {
       for (let key in data) {
@@ -64,5 +106,9 @@ export class GraphQLClient {
         error?.message ||
         error,
     );
+  }
+
+  free() {
+    this.cache?.deleteAll();
   }
 }
