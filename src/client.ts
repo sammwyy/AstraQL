@@ -2,18 +2,19 @@ import unfetch from 'isomorphic-unfetch';
 import md5 from 'md5';
 
 import { CacheLoader } from './cache';
+import { IDictionary } from './dictionary';
 import { GraphQLRequest } from './request';
 
 interface GQLClientSettings {
   cache?: CacheLoader;
   endpoint: string;
-  headers?: Record<string, any>;
+  headers?: IDictionary;
 }
 
 export class GraphQLClient {
   private cache: CacheLoader | undefined;
   private endpoint: string;
-  private headers: Record<string, any>;
+  private headers: IDictionary;
 
   constructor(settings: GQLClientSettings) {
     this.cache = settings.cache;
@@ -21,7 +22,7 @@ export class GraphQLClient {
     this.headers = settings.headers ? settings.headers : {};
   }
 
-  public addHeader(key: string, value: any) {
+  public addHeader(key: string, value: string) {
     this.headers[key] = value;
   }
 
@@ -35,8 +36,8 @@ export class GraphQLClient {
 
   private async _getCachedFetch(
     request: GraphQLRequest,
-    variables?: Record<string, any>,
-  ): Promise<Record<string, any> | null> {
+    variables?: IDictionary,
+  ): Promise<IDictionary | null> {
     if (!this.cache) return null;
 
     const rawId = request.type + request.body + JSON.stringify(variables);
@@ -47,8 +48,8 @@ export class GraphQLClient {
 
   private async _saveResponseToCache(
     request: GraphQLRequest,
-    variables: Record<string, any>,
-    response: Record<string, any>,
+    variables: IDictionary,
+    response: IDictionary,
   ): Promise<void> {
     if (!this.cache) return;
 
@@ -59,9 +60,9 @@ export class GraphQLClient {
 
   private async _fetch(
     request: GraphQLRequest,
-    variables?: Record<string, any>,
-  ): Promise<Record<string, any>> {
-    const copyRequest = {} as Record<string, any>;
+    variables?: IDictionary,
+  ): Promise<IDictionary> {
+    const copyRequest = {} as IDictionary;
     copyRequest[request.type] = request.body;
     copyRequest.variables = request.variables || variables;
 
@@ -82,8 +83,8 @@ export class GraphQLClient {
 
   public async fetch(
     request: GraphQLRequest,
-    variables?: Record<string, any>,
-  ): Promise<Record<string, any>> {
+    variables?: IDictionary,
+  ): Promise<IDictionary> {
     if (!request.body.startsWith(request.type)) {
       request.body = `${request.type} ${request.body}`;
     }
@@ -94,7 +95,7 @@ export class GraphQLClient {
     const { data, errors, error } = res;
 
     if (data) {
-      for (let key in data) {
+      for (const key in data) {
         return data[key];
       }
     }

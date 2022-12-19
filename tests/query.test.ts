@@ -6,7 +6,7 @@ const client = new GraphQLClient({
   endpoint: 'https://graphql.anilist.co',
 });
 
-test('Test query', async () => {
+test('API Query', async () => {
   const data = await client.fetch(characterQuery, { id: 128986 });
 
   expect(data.name.first).toBe('Bocchi');
@@ -15,7 +15,7 @@ test('Test query', async () => {
   expect(data.age).toBe('12-13');
 });
 
-test('Test cached query', async () => {
+test('Cached query', async () => {
   const data = await client.fetch(characterQuery, { id: 128986 });
 
   expect(data.name.first).toBe('Bocchi');
