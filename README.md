@@ -17,7 +17,7 @@ yarn add astraql
 ### As a ES Module
 
 ```javascript
-import { GraphQLClient, query } from 'astraql';
+import { CacheLoader, GraphQLClient, query } from 'astraql';
 
 // Initialize client.
 const client = new GraphQLClient({
@@ -25,7 +25,9 @@ const client = new GraphQLClient({
   // Optional authentication:
   headers: {
     'Authorization': 'bearer xxxxxxxxxxxx'
-  }
+  },
+  // Optional cache (in seconds)
+  cache: new CacheLoader({ expiresIn: 60 }),
 });
 
 // Create a query.
