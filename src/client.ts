@@ -63,7 +63,7 @@ export class GraphQLClient {
     variables?: IDictionary,
   ): Promise<IDictionary> {
     const copyRequest = {} as IDictionary;
-    copyRequest[request.type] = request.body;
+    copyRequest.query = request.body;
     copyRequest.variables = request.variables || variables;
 
     const req = await unfetch(this.endpoint, {

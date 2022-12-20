@@ -2,7 +2,7 @@
   "name": "astraql",
   "author": "sammwy",
   "description": "Fast and easy to use GraphQL Client.",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "license": "MIT",
   "main": "lib/index.js",
   "typings": "lib/index.d.ts",
